@@ -6,7 +6,7 @@ blueprint:
   name: Humidity controller
   description: Turn on and turn off your fan according to humidity and (assumed) user presence.
   domain: automation
-  source_url: https://github.com/home-assistant/core/blob/dev/homeassistant/components/automation/blueprints/motion_light.yaml
+  source_url: https://github.com/KrzysztofHajdamowicz/home-assistant-blueprints/raw/main/humidity_controller.yaml
   input:
     humidity_sensor:
       name: Humidity sensor
