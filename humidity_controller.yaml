@@ -1,0 +1,113 @@
+# Dumb way to control humidity in Bathroom using mechanical ventillation fan.
+# It tries to be quiet and enable fan after people leave the room, except it is really necessary.
+# Fan is usually turned on in periods when light is off.
+
+blueprint:
+  name: Humidity controller
+  description: Turn on and turn off your fan according to humidity and (assumed) user presence.
+  domain: automation
+  source_url: https://github.com/home-assistant/core/blob/dev/homeassistant/components/automation/blueprints/motion_light.yaml
+  input:
+    humidity_sensor:
+      name: Humidity sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+    light:
+      name: Light (or light group) to influence turning on or off fan.
+      selector:
+        entity:
+          domain: light
+    fan:
+      name: Fan to turn on or off depending on humidity sensor
+      selector:
+        entity:
+          domain: switch
+    high_humidity_level:
+      name: High humidity level
+      description: Turn on the fan, when humidity is above this value, but light is turned off.
+      default: 60
+      selector:
+        number:
+          min: 40
+          max: 100
+          unit_of_measurement: '%'
+    low_humidity_level:
+      name: Low humidity level
+      description: Turn off the fan, when humidity is below this value.
+      default: 55
+      selector:
+        number:
+          min: 40
+          max: 100
+          unit_of_measurement: '%'
+    extreme_humidity_level:
+      name: Extreme humidity level
+      description: Turn of the fan above this level and don't watch for light status!
+      default: 70
+      selector:
+        number:
+          min: 40
+          max: 100
+          unit_of_measurement: '%'
+
+# If motion is detected within the delay,
+# we restart the script.
+mode: restart
+max_exceeded: silent
+
+
+trigger:
+- platform: state
+  entity_id: !input humidity_sensor
+  id: humidity
+- platform: state
+  entity_id: !input light
+  id: presence
+condition: []
+action:
+- choose:
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input light
+        state: 'off'
+      - condition: numeric_state
+        entity_id: !input humidity_sensor
+        above: !input high_humidity_level
+    sequence:
+    - service: switch.turn_on
+      target:
+        entity_id: !input fan
+    - wait_for_trigger:
+      - platform: numeric_state
+        entity_id: !input humidity_sensor
+        below: !input low_humidity_level
+      continue_on_timeout: false
+    - service: switch.turn_off
+      target:
+        entity_id: !input fan
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: !input light
+        state: 'on'
+      - condition: numeric_state
+        entity_id: !input humidity_sensor
+        below: !input low_humidity_level
+    sequence:
+    - service: switch.turn_off
+      target:
+        entity_id: !input fan
+  - conditions:
+    - condition: numeric_state
+      entity_id: !input humidity_sensor
+      above: !input extreme_humidity_level
+    sequence:
+    - service: switch.turn_on
+      target:
+        entity_id: !input fan
+  default: []
