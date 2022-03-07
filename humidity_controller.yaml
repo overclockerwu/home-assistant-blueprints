@@ -14,11 +14,11 @@ blueprint:
         entity:
           domain: sensor
           device_class: humidity
-    light:
-      name: Light (or light group) to influence turning on or off fan.
+    switch:
+      name: Switch (or switch group) to influence turning on or off fan.
       selector:
         entity:
-          domain: light
+          domain: switch
     fan:
       name: Fan to turn on or off depending on humidity sensor
       selector:
@@ -63,7 +63,7 @@ trigger:
   entity_id: !input humidity_sensor
   id: humidity
 - platform: state
-  entity_id: !input light
+  entity_id: !input switch
   id: presence
 condition: []
 action:
@@ -72,7 +72,7 @@ action:
     - condition: and
       conditions:
       - condition: state
-        entity_id: !input light
+        entity_id: !input switch
         state: 'off'
       - condition: numeric_state
         entity_id: !input humidity_sensor
@@ -85,7 +85,7 @@ action:
     - condition: or
       conditions:
       - condition: state
-        entity_id: !input light
+        entity_id: !input switch
         state: 'on'
       - condition: numeric_state
         entity_id: !input humidity_sensor
